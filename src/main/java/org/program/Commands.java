@@ -4,12 +4,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public interface Commands {
-    public void exit_command();
-    public void ls_command() throws IOException;
-    public void cd_command(String to);
-    public void pwd_command();
-    public void find_command(String search_string);
-    public void cat_command(String file_name) throws FileNotFoundException;
-    public void clear_command();
-    public void mkdir_command(String file_name);
+    public String exit_command();
+    public String ls_command();
+    public String cd_command(String to);
+    public String pwd_command();
+    public String find_command(String search_string);
+    public String cat_command(String file_name);
+//    public String clear_command();
+    public String mkdir_command(String file_name);
 }

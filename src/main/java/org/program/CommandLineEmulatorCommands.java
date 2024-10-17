@@ -11,8 +11,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class CommandLineEmulatorCommands implements Commands {
-
-    private File current_directory;
+    protected File current_directory;
 
     public CommandLineEmulatorCommands() {
         current_directory = new File(System.getProperty("user.dir"));
@@ -24,25 +23,29 @@ public class CommandLineEmulatorCommands implements Commands {
 
         for (File file : files_in_directory) {
 
+            System.out.println(file.getName());
             if (file.isDirectory()) find_file_in_directory(file, search_string);
-            else if (file.getName().equals(search_string)) return "Файл с таким названием был найден " + search_string;
+            else if (file.getName().equals(search_string)) return "Файл с таким названием был успешно найден --> " + search_string;
         }
 
-        return "Ошибка: Файл с таким названием не был найден " + search_string;
+        return "Ошибка: Файл с таким названием не был найден --> " + search_string;
     }
 
-    public void exit_command() {
-        System.out.println(this.current_directory + "Exiting...");
-        System.exit(0);
+    public String exit_command() {
+        return this.current_directory.toString();
     }
 
-    public void ls_command() {
+    public String ls_command() {
+        StringBuilder result = new StringBuilder();
         String[] files = this.current_directory.list();
 
         assert files != null;
 
         try {
+            result.append(String.format("%-15s %-20s %-25s%n", "Permissions", "File Name", "Time"));
+
             for (String file_name : files) {
+
                 File file = new File(this.current_directory, file_name);
                 Path file_path = file.toPath();
                 BasicFileAttributes attrs = Files.readAttributes(file_path, BasicFileAttributes.class);
@@ -50,46 +53,51 @@ public class CommandLineEmulatorCommands implements Commands {
                         (file.canRead() ? "r" : "-") + (file.canWrite() ? "w" : "-") + (file.canExecute() ? "x" : "-");
                 Date creationDate = new Date(attrs.creationTime().toMillis());
                 SimpleDateFormat time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                time.format(creationDate);
+                String formatted_date = time.format(creationDate);
 
-                System.out.println(permissions + file_name + time);
+                result.append(String.format("%-15s %-20s %-25s%n", permissions, file_name, formatted_date));
             }
         }
         catch (IOException ex) {
-            System.out.println("Ошибка: Что-то пошло не так");
+            return this.error_command();
         }
+
+        return result.toString();
     }
 
-    public void mkdir_command(String file_name) {
+    public String mkdir_command(String file_name) {
         File new_directory = new File(this.current_directory, file_name);
 
         if (new_directory.exists()) {
-            System.out.println("Ошибка: Директория с таким именем уже существует: " + file_name);
+            return "Ошибка: Директория с таким именем уже существует --> " + file_name;
         }
         else {
             boolean flag = new_directory.mkdir();
 
-            if (flag) System.out.println("Директория с названием" + " " + file_name + " " + "была успешно создана");
-            else System.out.println("Ошибка: Что-то пошло не так при создании директории!");
+            if (flag) return "Директория с названием" + " " + file_name + " " + "была успешно создана";
+            else return "Ошибка: Что-то пошло не так при создании директории!";
         }
     }
 
-    public void cd_command(String to) {
+    public String cd_command(String to) {
         File new_directory = new File(this.current_directory, to);
 
-        if (new_directory.isDirectory()) this.current_directory = new_directory;
-        else System.out.println("Ошикба: Дируктория с таким названием не найдена " + to);
+        if (new_directory.isDirectory()) {
+            this.current_directory = new_directory;
+            return "";
+        }
+        else return "Ошикба: Дируктория с таким названием не найдена " + to;
     }
 
-    public void pwd_command() {
-        System.out.println(this.current_directory);
+    public String pwd_command() {
+        return this.current_directory.toString();
     }
 
-    public void find_command(String search_string) {
-        System.out.println(find_file_in_directory(this.current_directory, search_string));
+    public String find_command(String search_string) {
+        return find_file_in_directory(this.current_directory, search_string);
     }
 
-    public void cat_command(String file_name) {
+    public String cat_command(String file_name) {
         File read_file = new File(this.current_directory, file_name);
 
         try {
@@ -99,14 +107,31 @@ public class CommandLineEmulatorCommands implements Commands {
                 while (scanner.hasNextLine()) {
                     System.out.println(scanner.nextLine());
                 }
-            } else System.out.println("Ошибка: Файл с таким называнием не был найден");
+            } else return "Ошибка: Файл с таким называнием не был найден";
         }
         catch (FileNotFoundException exception) {
-            System.out.println("Ошибка: Что-то пошло не так");
+            return this.error_command();
         }
+
+        return this.error_command();
     }
 
-    public void clear_command() {
-
+    public String error_command() {
+        return "Ошибка, Что-то пошло не так";
     }
+    // реализация команды clear для режима cli
+
+//    public String clear_command() {
+//        try {
+//            if (System.getProperty("os.name").contains("Windows")) {
+//                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+//            } else {
+//                System.out.print("\033[H\033[2J");
+//                System.out.flush();
+//            }
+//        }
+//        catch (IOException | InterruptedException ex) {
+//            System.out.println("Ошибка: Что-то пошло не так");
+//        }
+//    }
 }
