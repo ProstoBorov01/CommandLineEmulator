@@ -4,9 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 public class CommandLineEmulator extends CommandLineEmulatorCommands {
-    private HashMap<String, Runnable> commands = new HashMap<>();
+    private HashMap<String, Supplier<String>> commands = new HashMap<>();
 
     private void fill_available_commands(String function_parameter) throws IOException {
         commands.put("ls", this::ls_command);
@@ -15,29 +16,22 @@ public class CommandLineEmulator extends CommandLineEmulatorCommands {
         commands.put("pwd", this::pwd_command);
         commands.put("find", () -> find_command(function_parameter));
         commands.put("cat", () -> cat_command(function_parameter));
-//        commands.put("clear", this::clear_command);
         commands.put("mkdir", () -> mkdir_command(function_parameter));
         commands.put("error", this::error_command);
     }
 
-    public Runnable execute(String key_command) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String line;
-
+    public String execute(String key_command, String arg) {
         try {
-            System.out.print(this.current_directory + " " + "> ");
-            line = reader.readLine();
-            String[] input = line.split(" ");
-
-            if (input.length >= 2) fill_available_commands(input[1]);
+            if (arg != "") fill_available_commands(arg);
             else fill_available_commands("");
 
-            if (this.commands.containsKey(input[0])) return commands.get(input[0]);
-            else return commands.get("error");
+            if (this.commands.containsKey(key_command)) {
+                return commands.get(key_command).get();
+            } else {
+                return commands.get("error").get();
+            }
         } catch (IOException ex) {
-
-            return commands.get("error");
+            return commands.get("error").get();
         }
     }
-
 }

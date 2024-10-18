@@ -41,7 +41,8 @@ public class ShellGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String command = inputField.getText();
-                executeCommand(command);
+                String[] data = command.split(" ");
+                executeCommand(data[0], data[1]);
                 inputField.setText("");
             }
         });
@@ -50,13 +51,19 @@ public class ShellGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String command = inputField.getText();
-                executeCommand(command);
+                String[] data = command.split(" ");
+                if (data.length == 2) executeCommand(data[0], data[1]);
+                else executeCommand(data[0], "");
                 inputField.setText("");
             }
         });
     }
-    private void executeCommand(String command) {
-        this.emulator.execute(command).run();
+    private void executeCommand(String command, String arg) {
+        outputArea.append(
+                "> " +
+                this.emulator.execute("pwd", "") + " " + command
+                        + " " + arg + " \n" + this.emulator.execute(command, arg)
+        );
     }
 
     public static void main(String[] args) {
