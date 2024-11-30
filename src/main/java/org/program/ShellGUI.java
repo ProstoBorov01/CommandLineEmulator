@@ -58,6 +58,7 @@ public class ShellGUI extends JFrame {
             }
         });
     }
+
     private void executeCommand(String command, String arg) {
         outputArea.append(
                 "> " +
