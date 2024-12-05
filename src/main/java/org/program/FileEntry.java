@@ -18,8 +18,8 @@ public class FileEntry {
         return name;
     }
 
-    public String getModification_date() {
-        return modification_date.toString();
+    public Date get_modification_date() {
+        return modification_date;
     }
 
     public String getPermissions() {

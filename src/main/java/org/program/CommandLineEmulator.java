@@ -9,6 +9,10 @@ import java.util.function.Supplier;
 public class CommandLineEmulator extends CommandLineEmulatorCommands {
     private HashMap<String, Supplier<String>> commands = new HashMap<>();
 
+    public CommandLineEmulator(String zipFilePath) throws IOException {
+        super(zipFilePath);
+    }
+
     private void fill_available_commands(String function_parameter) throws IOException {
         commands.put("ls", this::ls_command);
         commands.put("cd", () -> cd_command(function_parameter));

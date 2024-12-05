@@ -4,13 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class ShellGUI extends JFrame {
-    private final CommandLineEmulator emulator = new CommandLineEmulator();
+    private final CommandLineEmulator emulator = new CommandLineEmulator("C:\\Users\\SavvinPC\\Documents\\TAIGA.zip");
     private final JTextArea outputArea;
     private final JTextField inputField;
 
-    public ShellGUI() {
+    public ShellGUI() throws IOException {
         setTitle("Simple Terminal Emulator");
         setSize(500, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -42,7 +43,12 @@ public class ShellGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String command = inputField.getText();
                 String[] data = command.split(" ");
-                executeCommand(data[0], data[1]);
+                if (data.length > 1){
+                    executeCommand(data[0], data[1]);
+                }
+                else {
+                    executeCommand(data[0], "");
+                }
                 inputField.setText("");
             }
         });
@@ -69,9 +75,12 @@ public class ShellGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
-            @Override
             public void run() {
-                new ShellGUI().setVisible(true);
+                try {
+                    new ShellGUI().setVisible(true);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }

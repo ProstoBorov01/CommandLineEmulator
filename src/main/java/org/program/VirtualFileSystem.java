@@ -1,6 +1,5 @@
 package org.program;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,31 +18,65 @@ public class VirtualFileSystem {
 
     public VirtualFileSystem(String zip_path) throws IOException {
         this.zip_file = new ZipFile(zip_path);
-        this.current_path = "/";
+        this.current_path = "";
     }
 
     public String get_current_path() { return this.current_path; }
 
     public String change_directory(String directory_name)  {
         if (is_directory(directory_name)) {
-            current_path = this.current_path + "/" + directory_name;
+            this.current_path = this.current_path + "/" + directory_name;
         }
+
+        System.out.println(this.current_path);
 
         return "";
     }
 
     public ArrayList<FileEntry> list_files() throws ZipException {
-        ArrayList<FileEntry> result =  new ArrayList<FileEntry>();
-        Enumeration<? extends ZipEntry> zip_entries = this.zip_file.entries();
+        System.out.println(this.current_path);
+        ArrayList<FileEntry> result = new ArrayList<FileEntry>();
+        Enumeration<? extends ZipEntry> zipEntries = this.zip_file.entries();
+        Set<String> directories = new HashSet<>();
 
-        while (zip_entries.hasMoreElements()) {
-            ZipEntry element = zip_entries.nextElement();
+        String normalizedCurrentPath = this.current_path;
+        if (!normalizedCurrentPath.endsWith("/")) {
+            normalizedCurrentPath += "/";
+        }
+        if (!normalizedCurrentPath.startsWith("/")) {
+            normalizedCurrentPath = "/" + normalizedCurrentPath;
+        }
 
-            Date modification_date = new Date(element.getTime());
-            String permissions = this.getPermissions(new ZipArchiveEntry(element));
-            String file_name = element.getName();
-            FileEntry file_entry = new FileEntry(file_name, modification_date, permissions);
-            result.add(file_entry);
+        while (zipEntries.hasMoreElements()) {
+            ZipEntry element = zipEntries.nextElement();
+            String entryName = element.getName();
+
+            if (!entryName.startsWith("/")) {
+                entryName = "/" + entryName;
+            }
+
+            if (entryName.startsWith(normalizedCurrentPath)) {
+                String relativePath = entryName.substring(normalizedCurrentPath.length());
+
+                if (!relativePath.isEmpty() && !relativePath.contains("/")) {
+                    Date modificationDate = new Date(element.getTime());
+                    String permissions = this.get_permissions(new ZipArchiveEntry(element));
+                    String fileName = relativePath;
+                    FileEntry fileEntry = new FileEntry(fileName, modificationDate, permissions);
+                    result.add(fileEntry);
+                }
+
+                else if (!relativePath.isEmpty() && relativePath.indexOf('/') == relativePath.length() - 1) {
+                    String dirName = relativePath.substring(0, relativePath.length() - 1); // Убираем слеш
+                    if (!directories.contains(dirName)) {
+                        directories.add(dirName);
+                        Date modificationDate = new Date(element.getTime());
+                        String permissions = this.get_permissions(new ZipArchiveEntry(element));
+                        FileEntry fileEntry = new FileEntry(dirName, modificationDate, permissions);
+                        result.add(fileEntry);
+                    }
+                }
+            }
         }
 
         return result;
@@ -63,27 +96,20 @@ public class VirtualFileSystem {
         return string_builder.toString();
     }
 
-    public String find(String path, String name) throws IOException {
-        Enumeration<? extends ZipEntry> entries = new ZipFile(path).entries();
+    public List<String> find(String path, String name) throws IOException {
+        List<String> foundPaths = new ArrayList<>();
+        Enumeration<? extends ZipEntry> entries = this.zip_file.entries();
 
         while (entries.hasMoreElements()) {
             ZipEntry element = entries.nextElement();
-            ZipArchiveEntry entry = new ZipArchiveEntry(element);
+            String entryName = element.getName();
 
-            if (element.isDirectory()) {
-                if (element.getName().equals(name)) {
-                    return "Всё гуд";
-                }
-
-                find(this.current_path + "/" + element.getName(), name);
-            }
-
-            if (element.getName().equals(name)) {
-                return "Всё гуд";
+            if (entryName.contains(name)) {
+                foundPaths.add(entryName);
             }
         }
 
-        return "Такого нет";
+        return foundPaths;
     }
 
     public void close() throws IOException {
@@ -91,13 +117,11 @@ public class VirtualFileSystem {
     }
 
     private Boolean is_directory(String directory_name) {
-        String full_path = this.current_path + "/" + directory_name;
-        ZipEntry entry = this.zip_file.getEntry(full_path);
-
+        ZipEntry entry = this.zip_file.getEntry(directory_name);
         return entry != null && entry.isDirectory();
     }
 
-    private String getPermissions(ZipArchiveEntry entry) {
+    private String get_permissions(ZipArchiveEntry entry) {
         String defaultPermissions = entry.isDirectory() ? "drwxr-xr-x" : "-rw-r--r--";
         long externalAttributes = entry.getExternalAttributes();
 
