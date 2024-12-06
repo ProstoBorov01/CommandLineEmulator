@@ -3,8 +3,6 @@ package org.program;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Date;
 
 public class CommandLineEmulatorCommands implements Commands {
 
@@ -18,9 +16,9 @@ public class CommandLineEmulatorCommands implements Commands {
         try {
             fileSystem.close();
         } catch (IOException e) {
-            return "Ошибка при закрытии файловой системы: " + e.getMessage();
+            return "Error: " + e.getMessage();
         }
-        return "Выход из эмулятора.";
+        return "Exit from emulator.";
     }
 
     public String ls_command() {
@@ -44,21 +42,20 @@ public class CommandLineEmulatorCommands implements Commands {
                 result.append(line);
             }
         } catch (IOException e) {
-            return "Ошибка при выполнении команды ls: " + e.getMessage();
+            return "Error in proccess ls: " + e.getMessage();
         }
 
         return result.toString();
     }
 
     public String mkdir_command(String directoryName) {
-        // Создание директории не поддерживается в виртуальной файловой системе
-        return "Ошибка: Создание директорий в виртуальной файловой системе не поддерживается.";
+        return "Error: not realized yet";
     }
 
     public String cd_command(String directoryName) {
         String message = fileSystem.change_directory(directoryName);
         if (message.isEmpty()) {
-            return "Текущая директория изменена на " + fileSystem.get_current_path();
+            return "New directory: " + fileSystem.get_current_path();
         } else {
             return message;
         }
@@ -75,14 +72,14 @@ public class CommandLineEmulatorCommands implements Commands {
             List<String> foundPaths = fileSystem.find(fileSystem.get_current_path(), searchString);
 
             if (foundPaths.isEmpty()) {
-                result.append("Совпадений не найдено.");
+                result.append("No results");
             } else {
                 for (String path : foundPaths) {
                     result.append(path).append("\n");
                 }
             }
         } catch (IOException e) {
-            return "Ошибка при выполнении команды find: " + e.getMessage();
+            return "Error: " + e.getMessage();
         }
 
         return result.toString();
@@ -99,6 +96,6 @@ public class CommandLineEmulatorCommands implements Commands {
     }
 
     public String error_command() {
-        return "Ошибка: Что-то пошло не так.";
+        return "Error";
     }
 }

@@ -7,7 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class ShellGUI extends JFrame {
-    private final CommandLineEmulator emulator = new CommandLineEmulator("C:\\Users\\SavvinPC\\Documents\\TAIGA.zip");
+    private final CommandLineEmulator emulator = new CommandLineEmulator("C:\\Users\\SavvinPC\\Documents\\abc.zip");
     private final JTextArea outputArea;
     private final JTextField inputField;
 
@@ -30,8 +30,7 @@ public class ShellGUI extends JFrame {
 
         JButton sendButton = new JButton("Send");
 
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new BorderLayout());
+        JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
 
@@ -41,14 +40,24 @@ public class ShellGUI extends JFrame {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String command = inputField.getText();
-                String[] data = command.split(" ");
-                if (data.length > 1){
-                    executeCommand(data[0], data[1]);
+                String commandLine = inputField.getText().trim();
+                if (commandLine.isEmpty()) return;
+
+                String[] data = commandLine.split(" ", 2);
+                String cmd = data[0];
+                String arg = (data.length > 1) ? data[1] : "";
+
+                if (cmd.equals("exit")) {
+                    System.exit(0);
                 }
-                else {
-                    executeCommand(data[0], "");
+
+                if (cmd.equals("clear")) {
+                    outputArea.setText("");
+                    inputField.setText("");
+                    return;
                 }
+
+                executeCommand(cmd, arg);
                 inputField.setText("");
             }
         });
@@ -56,10 +65,24 @@ public class ShellGUI extends JFrame {
         inputField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String command = inputField.getText();
-                String[] data = command.split(" ");
-                if (data.length == 2) executeCommand(data[0], data[1]);
-                else executeCommand(data[0], "");
+                String commandLine = inputField.getText().trim();
+                if (commandLine.isEmpty()) return;
+
+                String[] data = commandLine.split(" ", 2);
+                String cmd = data[0];
+                String arg = (data.length > 1) ? data[1] : "";
+
+                if (cmd.equals("exit")) {
+                    System.exit(0);
+                }
+
+                if (cmd.equals("clear")) {
+                    outputArea.setText("");
+                    inputField.setText("");
+                    return;
+                }
+
+                executeCommand(cmd, arg);
                 inputField.setText("");
             }
         });
@@ -68,19 +91,18 @@ public class ShellGUI extends JFrame {
     private void executeCommand(String command, String arg) {
         outputArea.append(
                 "> " +
-                this.emulator.execute("pwd", "") + " " + command
-                        + " " + arg + " \n" + this.emulator.execute(command, arg)
+                        this.emulator.execute("pwd", "") + " " + command
+                        + (arg.isEmpty() ? "" : " " + arg) + "\n" +
+                        this.emulator.execute(command, arg) + "\n"
         );
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    new ShellGUI().setVisible(true);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new ShellGUI().setVisible(true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
     }

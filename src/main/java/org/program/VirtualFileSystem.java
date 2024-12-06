@@ -10,7 +10,6 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.*;
 
-
 public class VirtualFileSystem {
 
     private final ZipFile zip_file;
@@ -23,14 +22,43 @@ public class VirtualFileSystem {
 
     public String get_current_path() { return this.current_path; }
 
-    public String change_directory(String directory_name)  {
-        if (is_directory(directory_name)) {
-            this.current_path = this.current_path + "/" + directory_name;
+    public String change_directory(String directory_name) {
+        String new_path;
+
+        if (directory_name.equals("..")) {
+            if (this.current_path.isEmpty()) {
+                System.out.println("Вы уже на самом верхнем уровне.");
+                return this.current_path;
+            }
+
+            int last_separator = this.current_path.lastIndexOf('/');
+            if (last_separator == -1) {
+                new_path = "";
+            } else {
+                new_path = this.current_path.substring(0, last_separator);
+            }
+
+            System.out.println("Попытка сменить директорию на: " + (new_path.isEmpty() ? "/" : new_path));
+
+            if (is_directory(new_path)) {
+                this.current_path = new_path;
+                System.out.println("Директория успешно изменена на: " + (this.current_path.isEmpty() ? "/" : this.current_path));
+            } else {
+                System.out.println("Ошибка: Невозможно перейти в родительскую директорию.");
+            }
+        } else {
+            new_path = this.current_path.isEmpty() ? directory_name : this.current_path + "/" + directory_name;
+            System.out.println("Попытка сменить директорию на: " + new_path);
+
+            if (is_directory(new_path)) {
+                this.current_path = new_path;
+                System.out.println("Директория успешно изменена на: " + this.current_path);
+            } else {
+                System.out.println("Ошибка: Директория не найдена или не является директорией: " + directory_name);
+            }
         }
 
-        System.out.println(this.current_path);
-
-        return "";
+        return this.current_path;
     }
 
     public ArrayList<FileEntry> list_files() throws ZipException {
@@ -82,8 +110,10 @@ public class VirtualFileSystem {
         return result;
     }
 
+
     public String read_file(String file_name) throws IOException {
-        InputStream is = this.zip_file.getInputStream(this.zip_file.getEntry(file_name));
+        String fullPath = this.current_path.isEmpty() ? file_name : this.current_path + "/" + file_name;
+        InputStream is = this.zip_file.getInputStream(this.zip_file.getEntry(fullPath));
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder string_builder = new StringBuilder();
         String line;
@@ -106,18 +136,24 @@ public class VirtualFileSystem {
 
             if (entryName.contains(name)) {
                 foundPaths.add(entryName);
+                System.out.println("Объект найден" + entryName);
             }
         }
 
         return foundPaths;
     }
 
+
     public void close() throws IOException {
         this.zip_file.close();
     }
 
-    private Boolean is_directory(String directory_name) {
-        ZipEntry entry = this.zip_file.getEntry(directory_name);
+    private Boolean is_directory(String directory_path) {
+        ZipEntry entry = this.zip_file.getEntry(directory_path);
+        if (entry != null && entry.isDirectory()) {
+            return true;
+        }
+        entry = this.zip_file.getEntry(directory_path + "/");
         return entry != null && entry.isDirectory();
     }
 
